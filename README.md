@@ -7,15 +7,15 @@ Applied some tweaks from Meizu Pro 7 and 7 plus. Work in progress
 
 Custom parameters:
 
-system.num_limit_low_batt=
-#/proc/hps/num_limit_low_batt
+system.num_limit_low_batt=     
+#/proc/hps/num_limit_low_batt   
 
-system.num_limit_power_serv=
-#/proc/hps/num_limit_power_serv
+system.num_limit_power_serv=    
+#/proc/hps/num_limit_power_serv    
 
 
 system.num_limit_low_batt=   
-#/proc/hps/num_limit_low_batt
+#/proc/hps/num_limit_low_batt   
 
 system.num_limit_power_serv=   
 #/proc/hps/num_limit_power_serv
