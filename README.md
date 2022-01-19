@@ -9,6 +9,7 @@ Custom parameters:
 
 system.num_limit_low_batt=
 #/proc/hps/num_limit_low_batt
+
 system.num_limit_power_serv=
 #/proc/hps/num_limit_power_serv
 
@@ -45,29 +46,29 @@ system.encryption=unsupported
 #/proc/sys/fs/ext4/features/encryption unsupported
 
 system.scheduler=   
-#/sys/block/zram0/queue/scheduler
-#/sys/block/mmcblk1/queue/scheduler
-#/sys/block/mmcblk0/queue/scheduler
+#/sys/block/zram0/queue/scheduler    
+#/sys/block/mmcblk1/queue/scheduler    
+#/sys/block/mmcblk0/queue/scheduler    
 
-system.add_random=   
-#/sys/block/zram0/queue/add_random
-#/sys/block/mmcblk1/queue/add_random
-#/sys/block/mmcblk0/queue/add_random
+system.add_random=    
+#/sys/block/zram0/queue/add_random   
+#/sys/block/mmcblk1/queue/add_random    
+#/sys/block/mmcblk0/queue/add_random    
 
-system.read_ahead_kb=   
-#/sys/block/zram0/queue/read_ahead_kb 
-#/sys/block/mmcblk1/queue/read_ahead_kb 
-#/sys/block/mmcblk0/queue/read_ahead_kb 
+system.read_ahead_kb=    
+#/sys/block/zram0/queue/read_ahead_kb    
+#/sys/block/mmcblk1/queue/read_ahead_kb    
+#/sys/block/mmcblk0/queue/read_ahead_kb    
 
 system.nr_requests=   
-#/sys/block/zram0/queue/nr_requests
-#/sys/block/mmcblk1/queue/nr_requests
-#/sys/block/mmcblk0/queue/nr_requests
+#/sys/block/zram0/queue/nr_requests   
+#/sys/block/mmcblk1/queue/nr_requests    
+#/sys/block/mmcblk0/queue/nr_requests   
 
 system.iostats=   
-#/sys/block/zram0/queue/iostats
-#/sys/block/mmcblk1/queue/iostats 
-#/sys/block/mmcblk0/queue/iostats 
+#/sys/block/zram0/queue/iostats     
+#/sys/block/mmcblk1/queue/iostats    
+#/sys/block/mmcblk0/queue/iostats    
 
 system.go_hispeed_load=   
 #/sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load 
@@ -144,10 +145,10 @@ system.custom_boost_gpu_freq=
 system.custom_upbound_gpu_freq=   
 #/d/ged/hal/custom_upbound_gpu_freq 
 
-system.perf_ioctl=0
-#/proc/perfmgr/perf_ioctl freq 0
-#/proc/perfmgr/perf_ioctl touch 0 
-#/proc/perfmgr/perf_ioctl core 0
+system.perf_ioctl=0    
+#/proc/perfmgr/perf_ioctl freq 0     
+#/proc/perfmgr/perf_ioctl touch 0     
+#/proc/perfmgr/perf_ioctl core 0     
 
 system.gpufreq_input_boost=   
 #/proc/gpufreq/gpufreq_input_boost 
@@ -215,9 +216,9 @@ system.clabcct_lcmoff=
 system.clmutt=   
 #/proc/driver/thermal/clmutt
 
-system.clatm_setting=enabled
-#/proc/driver/thermal/clatm_setting 0 3000 10 15 1 560 0 1000 0
-#/proc/driver/thermal/clatm_setting 1 2000 15 30 1 460 8000 700 0
+system.clatm_setting=enabled    
+#/proc/driver/thermal/clatm_setting 0 3000 10 15 1 560 0 1000 0    
+#/proc/driver/thermal/clatm_setting 1 2000 15 30 1 460 8000 700 0    
 
 system.clfps_level=   
 #/proc/driver/thermal/clfps_level 
