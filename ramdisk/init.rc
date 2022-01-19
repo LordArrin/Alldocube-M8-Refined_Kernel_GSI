@@ -780,10 +780,6 @@ on property:system.gpufreq_input_boost=*
     write /proc/gpufreq/gpufreq_input_boost ${system.gpufreq_input_boost}
 on property:system.gpufreq_opp_max_freq=*
     write /proc/gpufreq/gpufreq_opp_max_freq ${system.gpufreq_opp_max_freq}
-on property:system.gpufreq_opp_max_freq=*
-    write /proc/gpufreq/gpufreq_opp_max_freq ${system.gpufreq_opp_max_freq}
-on property:system.gpufreq_opp_max_freq=*
-    write /proc/gpufreq/gpufreq_opp_max_freq ${system.gpufreq_opp_max_freq}
 on property:system.gpufreq_opp_freq=*
     write /proc/gpufreq/gpufreq_opp_freq ${system.gpufreq_opp_freq}
 on property:system.dvfs_enable=*
