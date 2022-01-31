@@ -136,7 +136,7 @@ loglevel 5
     write /proc/sys/vm/mmap_min_addr 32768
     write /proc/sys/net/ipv4/ping_group_range "0 2147483647"
     write /proc/sys/net/unix/max_dgram_qlen 600
-    write /proc/sys/kernel/sched_rt_runtime_us 900000
+    write /proc/sys/kernel/sched_rt_runtime_us 950000
     write /proc/sys/kernel/sched_rt_period_us 1000000
     # Assign reasonable ceiling values for socket rcv/snd buffers.
     # These should almost always be overridden by the target per the
@@ -218,7 +218,6 @@ on fs
 #INTERNAL_START
     write /proc/bootprof "INIT:Mount_START"
     mount_all /vendor/etc/fstab.mt6797 ${ro.mtkrc.path}multi_init.rc
-    exec /system/bin/tune2fs -O has_journal -u 10010 -r 4096 /dev/block/platform/bootdevice/by-name/user
     write /proc/bootprof "INIT:Mount_END"
 #INTERNAL_END
 # mount different fs end
@@ -641,10 +640,10 @@ service adbd /sbin/adbd --root_seclabel=u:r:su:s0
 ## Custom service area (START)
 # Please add custom service below
 
-service thermal_manager /vendor/bin/thermal_manager
-    user root
-	group system
-    oneshot
+#service thermal_manager /vendor/bin/thermal_manager
+#    user root
+#	group system
+#    oneshot
 
 service permission_check /vendor/bin/permission_check
     user root
@@ -680,55 +679,6 @@ service nvram_daemon /vendor/bin/nvram_daemon
     class main
     user root
     group system
-    oneshot
-
-service mdlogger /system/bin/mdlogger
-    class main
-    user shell
-    group shell system radio sdcard_rw inet
-    disabled
-    oneshot
-
-service dualmdlogger /system/bin/dualmdlogger
-    class main
-    user shell
-    group shell system radio sdcard_rw inet
-    disabled
-    oneshot
-
-service emdlogger1 /system/bin/emdlogger1
-    class main
-    user shell
-    group system shell radio sdcard_rw inet sdcard_r media_rw
-    disabled
-    oneshot
-
-service emdlogger2 /system/bin/emdlogger2
-    class main
-    user shell
-    group system shell radio sdcard_rw inet sdcard_r media_rw
-    disabled
-    oneshot
-
-service emdlogger3 /system/bin/emdlogger3
-    class main
-    user shell
-    group system shell radio sdcard_rw inet sdcard_r media_rw
-    disabled
-    oneshot
-
-service emdlogger5 /system/bin/emdlogger5
-    class main
-    user shell
-    group system shell radio sdcard_rw inet sdcard_r media_rw
-    disabled
-    oneshot
-
-service emdlogger6 /system/bin/emdlogger6
-    class main
-    user shell
-    group system shell radio sdcard_rw inet sdcard_r media_rw
-    disabled
     oneshot
 
 service factory_no_image /system/bin/factory

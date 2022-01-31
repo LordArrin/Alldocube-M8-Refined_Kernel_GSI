@@ -10,11 +10,8 @@ import /init.${ro.hardware}.rc
 import /vendor/etc/init/hw/init.${ro.hardware}.rc
 import /init.usb.configfs.rc
 import /init.${ro.zygote}.rc
-# add for cdfinger start
-
 import /init.cdfinger.rc
 
-# add for cdfinger end
 on early-init
     # Set init and its forked children's oom_adj.
     write /proc/1/oom_score_adj -1000
@@ -44,7 +41,11 @@ on init
     symlink /system/etc /etc
     symlink /sys/kernel/debug /d
 
-    # Link /vendor to /system/vendor for devices without a vendor partition.
+    # Entropy. Not so secure, but nothing critical.
+
+    symlink /dev/urandom /dev/random
+
+    # Link /vendor to /system/vendor for devices without a vendor partition. 
     symlink /system/vendor /vendor
 
     # Mount cgroup mount point for cpu accounting
@@ -109,7 +110,7 @@ on init
     # app mem cgroups, used by activity manager, lmkd and zygote
     mkdir /dev/memcg/apps/ 0755 system system
 
-    write /proc/sys/kernel/panic_on_oops 1
+    write /proc/sys/kernel/panic_on_oops 0
     write /proc/sys/kernel/hung_task_timeout_secs 0
     write /proc/cpu/alignment 4
 
@@ -120,14 +121,132 @@ on init
     write /proc/sys/kernel/sched_tunable_scaling 0
     write /proc/sys/kernel/sched_latency_ns 10000000
     write /proc/sys/kernel/sched_wakeup_granularity_ns 2000000
+    write /proc/sys/kernel/sched_compat_yield 1
     write /proc/sys/kernel/sched_child_runs_first 0
 
+    # Tweaks for vm sheduler 
+
+    write /sys/block/zram0/queue/scheduler noop
+    write /sys/block/mmcblk1/queue/scheduler deadline
+    write /sys/block/mmcblk0/queue/scheduler deadline
+    write /sys/block/zram0/queue/add_random 0
+    write /sys/block/mmcblk1/queue/add_random 0
+    write /sys/block/mmcblk1/queue/add_random 0
+    write /sys/block/zram0/queue/read_ahead_kb 128
+    write /sys/block/mmcblk0/queue/read_ahead_kb 512
+    write /sys/block/mmcblk1/queue/read_ahead_kb 512
+    write /sys/block/zram0/queue/nr_requests 512
+    write /sys/block/mmcblk0/queue/nr_requests 1024
+    write /sys/block/mmcblk1/queue/nr_requests 1024
+    write /sys/block/zram0/queue/iostats 0
+    write /sys/block/mmcblk0/queue/iostats 0
+    write /sys/block/mmcblk1/queue/iostats 0
+
+    # cpu tweaks etc.
+
+    write /proc/sys/kernel/threads-max 999999
+    write /proc/sys/kernel/aio-max-nr 999999 
+
+    # Highspeed load for better experience
+
+    write /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load 85
+
+    # When overcommit_memory is set to 2, “never overcommit” mode, reserve min(3% of current process size, user_reserve_kbytes) 
+    # of free memory. This is intended to prevent a user from starting a single memory hogging process, 
+    # such that they cannot recover (kill the hog). Increased for stability.
+
+    write /proc/sys/vm/user_reserve_kbytes 131072
+
+    # This is used to force the Linux VM to keep a minimum number of kilobytes free. 
+    # The VM uses this number to compute a watermark[WMARK_MIN] value for each lowmem zone in the system. 
+    # Each lowmem zone gets a number of reserved free pages based proportionally on its size.
+
+    write /proc/sys/vm/min_free_kbytes 16384
+
+    # This parameter tells the VM to keep extra free memory between the threshold
+    # where background reclaim (kswapd) kicks in, and the threshold where direct
+    # reclaim (by allocating processes) kicks in.
+    # This is useful for workloads that require low latency memory allocations
+    # and have a bounded burstiness in memory allocations, for example a
+    # realtime application that receives and transmits network traffic
+    # (causing in-kernel memory allocations) with a maximum total message burst
+    # size of 200MB may need 200MB of extra free memory to avoid direct reclaim
+    # related latencies.
+
+    write /proc/sys/vm/extra_free_kbytes 16384
+
+    # The amount of free memory in the system that should be reserved for users with the capability cap_sys_admin. Useless in Android.
+
+    write /proc/sys/vm/admin_reserve_kbytes 0
+
+    # Little tune for VM
+
+    write /proc/sys/vm/max_map_count 262144
+    write /proc/sys/vm/timer_migration 0
+
+    # Limit CPU cores in different situations. Disabled
+
+    write /proc/hps/num_limit_low_batt 0
+    write /proc/hps/num_limit_power_serv 0
+    write /proc/hps/num_limit_thermal 0
+    write /proc/hps/num_limit_ultra_power_saving 0
+
+    # Contains, as a percentage of total available memory that contains free pages and reclaimable pages, 
+    # the number of pages at which a process which is generating disk writes will itself start writing out dirty data.
+
+    write /proc/sys/vm/dirty_ratio 95
+
+    # Contains, as a percentage of total available memory that contains free pages and reclaimable pages, 
+    # the number of pages at which the background kernel flusher threads will start writing out dirty data.
+
+    write /proc/sys/vm/dirty_background ratio 80
+
+    # Hints to the kernel how much CPU time it should be allowed to use to handle perf sampling events.
+    # If the perf subsystem is informed that its samples are exceeding this limit, it
+    # will drop its sampling frequency to attempt to reduce its CPU usage. Disabled.
+
+    write /proc/sys/kernel/perf_cpu_time_max_percent 0
+
     write /proc/sys/kernel/randomize_va_space 2
-    write /proc/sys/kernel/kptr_restrict 2
     write /proc/sys/vm/mmap_min_addr 32768
     write /proc/sys/net/ipv4/ping_group_range "0 2147483647"
     write /proc/sys/net/unix/max_dgram_qlen 600
-    write /proc/sys/kernel/sched_rt_runtime_us 900000
+
+    # Debug parameters
+
+    write /sys/kernel/debug/ged/hal/fps_upper_bound 48
+    write /sys/kernel/debug/
+
+    # CPU Boost
+
+    write /proc/hps/input_boost_cpu_num 4
+    write /proc/hps/rush_boost_enabled 1
+    write /proc/hps/rush_boost_cpu_num 8
+    write /proc/hps/input_boost_enabled 1
+    write /sys/devices/system/cpu/kernel_max -1
+
+    # GPU always on. Test
+
+    write /sys/devices/soc/13040000.mali/power_policy always_on
+
+    # Fps fix
+
+    write /proc/driver/fps_tm 48
+
+    # Performance policy
+
+    write /proc/ppm/mode Performance
+    write /proc/ppm/policy/hica_power_state 3
+    write /proc/gpufreq/gpufreq_limited_thermal_ignore 1
+    write /proc/gpufreq/lpt_enable 0
+
+    # A global limit on how much time realtime scheduling may use.  Even without
+    # CONFIG_RT_GROUP_SCHED enabled, this will limit time reserved to realtime
+    # processes. With CONFIG_RT_GROUP_SCHED it signifies the total bandwidth
+    # available to all realtime groups.
+    write /proc/sys/kernel/sched_rt_runtime_us -1
+
+    # The scheduling period that is equivalent to 100% CPU bandwidth
     write /proc/sys/kernel/sched_rt_period_us 1000000
 
     # Assign reasonable ceiling values for socket rcv/snd buffers.
@@ -135,6 +254,18 @@ on init
     # the corresponding technology maximums.
     write /proc/sys/net/core/rmem_max  262144
     write /proc/sys/net/core/wmem_max  262144
+
+    #Debugging
+
+    write /sys/module/alarm_dev/parameters/debug_mask 0 
+    write /sys/module/alarmtimer/parameters/debug_mask 0
+    write /sys/module/binder/parameters/debug_mask 0
+    write /sys/module/earlysuspend/parameters/debug_mask 0
+    write /sys/module/sbsuspend/parameters/sbsuspend_debug_mask 0
+    write /sys/module/snd/parameters/debug 0
+    write /sys/module/pvrsrvkm/parameters/gPVRDebugLevel 0
+    write /sys/module/musb_hdrc/parameters/debug_level 0
+    write /sys/module/lowmemorykiller/parameters/debug_level 0  
 
     # reflect fwmark from incoming packets onto generated replies
     write /proc/sys/net/ipv4/fwmark_reflect 1
@@ -156,6 +287,7 @@ on init
     chown system system /dev/cpuctl
     chown system system /dev/cpuctl/tasks
     chmod 0666 /dev/cpuctl/tasks
+    write /dev/cpuctl/cpu.shares 1024
     write /dev/cpuctl/cpu.rt_period_us 1000000
     write /dev/cpuctl/cpu.rt_runtime_us 800000
 
@@ -296,7 +428,7 @@ on late-init
 
     trigger early-boot
     trigger boot
-
+    
 on post-fs
     # Load properties from
     #     /system/build.prop,
@@ -539,7 +671,7 @@ on boot
 
     # Memory management.  Basic kernel parameters, and allow the high
     # level system server to be able to adjust the kernel OOM driver
-    # parameters to match how it is managing things.
+    # parameters to match how it is managing things. Setting "2" crashes all.
     write /proc/sys/vm/overcommit_memory 1
     write /proc/sys/vm/min_free_order_shift 4
     chown root system /sys/module/lowmemorykiller/parameters/adj
@@ -550,6 +682,12 @@ on boot
     # Tweak background writeout
     write /proc/sys/vm/dirty_expire_centisecs 200
     write /proc/sys/vm/dirty_background_ratio  5
+
+    # Custom 
+    # Flyme 7 ost
+    write /proc/sys/vm/swappiness 100
+    write /sys/fs/cgroup/memory/sw/memory.swappiness 100
+    write /proc/sys/vm/vfs_cache_pressure 200
 
     # Permissions for System Server and daemons.
     chown radio system /sys/android_power/state
@@ -679,166 +817,6 @@ on property:sys.sysctl.extra_free_kbytes=*
 on property:sys.sysctl.tcp_def_init_rwnd=*
     write /proc/sys/net/ipv4/tcp_default_init_rwnd ${sys.sysctl.tcp_def_init_rwnd}
 
-#Some tweaks
-
-on property:system.num_limit_low_batt=*
-    write /proc/hps/num_limit_low_batt ${system.num_limit_low_batt}
-on property:system.num_limit_power_serv=*
-    write /proc/hps/num_limit_power_serv ${system.num_limit_power_serv}
-on property:system.num_limit_thermal=*
-    write /proc/hps/num_limit_thermal ${system.num_limit_thermal}
-on property:system.num_limit_ultra_power_saving=*
-    write /proc/hps/num_limit_ultra_power_saving ${system.num_limit_ultra_power_saving}
-on property:system.vfs_cache_pressure=*
-    write /proc/sys/vm/vfs_cache_pressure ${system.vfs_cache_pressure}
-on property:system.dirty_ratio=*
-    write /proc/sys/vm/dirty_ratio ${system.dirty_ratio}
-on property:system.dirty_background_ratio=*
-    write /proc/sys/vm/dirty_background_ratio ${system.dirty_background_ratio}
-on property:system.overcommit_ratio=*
-    write /proc/sys/vm/overcommit_ratio ${system.overcommit_ratio}
-on property:system.swappiness=*
-    write /proc/sys/vm/swappiness ${system.swappiness}
-    write /sys/fs/cgroup/memory/sw/memory.swappiness ${system.swappiness}
-on property:system.encryption=unsupported
-    write /proc/sys/fs/ext4/features/encryption unsupported
-on property:system.scheduler=*
-    write /sys/block/zram0/queue/scheduler ${system.scheduler}
-    write /sys/block/mmcblk1/queue/scheduler ${system.scheduler}
-    write /sys/block/mmcblk0/queue/scheduler ${system.scheduler}
-on property:system.add_random=*
-    write /sys/block/zram0/queue/add_random ${system.add_random}
-    write /sys/block/mmcblk1/queue/add_random ${system.add_random}
-    write /sys/block/mmcblk0/queue/add_random ${system.add_random}
-on property:system.read_ahead_kb=*
-    write /sys/block/zram0/queue/read_ahead_kb ${system.read_ahead_kb}
-    write /sys/block/mmcblk1/queue/read_ahead_kb ${system.read_ahead_kb}
-    write /sys/block/mmcblk0/queue/read_ahead_kb ${system.read_ahead_kb}
-on property:system.nr_requests=*
-    write /sys/block/zram0/queue/nr_requests ${system.nr_requests}
-    write /sys/block/mmcblk1/queue/nr_requests ${system.nr_requests}
-    write /sys/block/mmcblk0/queue/nr_requests ${system.nr_requests}
-on property:system.iostats=*
-    write /sys/block/zram0/queue/iostats ${system.iostats}
-    write /sys/block/mmcblk1/queue/iostats ${system.iostats}
-    write /sys/block/mmcblk0/queue/iostats ${system.iostats}
-on property:system.go_hispeed_load=*
-    write /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load ${system.go_hispeed_load}
-on property:system.min_sample_time=*
-    write /sys/devices/system/cpu/cpufreq/interactive/min_sample_time ${system.min_sample_time}
-on property:system.min_free_kbytes=*
-    write /proc/sys/vm/min_free_kbytes ${system.min_free_kbytes}
-on property:system.extra_free_kbytes=*
-    write /proc/sys/vm/extra_free_kbytes ${system.extra_free_kbytes}
-on property:system.admin_reserve_kbytes=*
-    write /proc/sys/vm/admin_reserve_kbytes ${system.admin_reserve_kbytes}
-on property:system.user_reserve_kbytes=*
-    write /proc/sys/vm/user_reserve_kbytes ${system.user_reserve_kbytes}
-on property:system.max_map_count=*
-    write /proc/sys/vm/max_map_count ${system.max_map_count}
-on property:system.timer_migration=*
-    write /proc/sys/vm/timer_migration ${system.timer_migration}
-on property:system.sched_migration_cost_ns=*
-    write /proc/sys/kernel/sched_migration_cost_ns ${system.sched_migration_cost_ns}
-on property:system.threads-max=*
-    write /proc/sys/kernel/threads-max ${system.threads-max}
-on property:system.aio-max-nr=*
-    write /proc/sys/kernel/aio-max-nr ${system.aio-max-nr}
-on property:system.mode=*
-    write /proc/ppm/mode ${system.mode}
-on property:system.dlpt_limit=*
-    write /proc/ppm/policy/dlpt_limit ${system.dlpt_limit}
-on property:system.sysboost_freq=*
-    write /proc/ppm/policy/sysboost_freq ${system.sysboost_freq}
-on property:system.hica_power_state=*
-    write /proc/ppm/policy/hica_power_state ${system.hica_power_state}
-on property:system.thermlmt=*
-    write /proc/thermlmt ${system.thermlmt}
-on property:system.cpufreq_power_mode=*
-    write /proc/cpufreq/cpufreq_power_mode ${system.cpufreq_power_mode}
-on property:system.hica_is_limit_big_freq=*
-    write /proc/ppm/policy/hica_is_limit_big_freq ${system.hica_is_limit_big_freq}
-on property:system.gpufreq_limited_thermal_ignore=*
-    write /proc/gpufreq/gpufreq_limited_thermal_ignore ${system.gpufreq_limited_thermal_ignore}
-on property:system.gpufreq_volt_enable=*
-    write /proc/gpufreq/gpufreq_volt_enable ${system.gpufreq_volt_enable}
-on property:system.lpt_enable=*
-    write /proc/gpufreq/lpt_enable ${system.lpt_enable}
-on property:system.event_notify=*
-    write /d/ged/hal/event_notify ${system.event_notify}
-on property:system.fps_upper_bound=*
-    write /d/ged/hal/fps_upper_bound ${system.fps_upper_bound}
-on property:system.custom_boost_gpu_freq=*
-    write /d/ged/hal/custom_boost_gpu_freq ${system.custom_boost_gpu_freq}
-on property:system.custom_upbound_gpu_freq=*
-    write /d/ged/hal/custom_upbound_gpu_freq ${system.custom_upbound_gpu_freq}
-on property:system.perf_ioctl=0
-    write /proc/perfmgr/perf_ioctl freq 0
-    write /proc/perfmgr/perf_ioctl touch 0 
-    write /proc/perfmgr/perf_ioctl core 0
-on property:system.gpufreq_input_boost=*
-    write /proc/gpufreq/gpufreq_input_boost ${system.gpufreq_input_boost}
-on property:system.gpufreq_opp_max_freq=*
-    write /proc/gpufreq/gpufreq_opp_max_freq ${system.gpufreq_opp_max_freq}
-on property:system.gpufreq_opp_freq=*
-    write /proc/gpufreq/gpufreq_opp_freq ${system.gpufreq_opp_freq}
-on property:system.dvfs_enable=*
-    write /proc/mali/dvfs_enable ${system.dvfs_enable}
-on property:system.gpufreq_limited_thermal_ignore=*
-    write /proc/gpufreq/gpufreq_limited_thermal_ignore ${system.gpufreq_limited_thermal_ignore}
-on property:system.gpufreq_limited_low_batt_volt_ignore=*
-    write /proc/gpufreq/gpufreq_limited_low_batt_volt_ignore ${system.gpufreq_limited_low_batt_volt_ignore}
-on property:system.gpufreq_limited_low_batt_volume_ignore=*
-    write /proc/gpufreq/gpufreq_limited_low_batt_volume_ignore ${system.gpufreq_limited_low_batt_volume_ignore}
-on property:system.gpufreq_limited_pbm_ignore=*
-    write /proc/gpufreq/gpufreq_limited_pbm_ignore ${system.gpufreq_limited_pbm_ignore}
-on property:system.gpufreq_limited_oc_ignore=*
-    write /proc/gpufreq/gpufreq_limited_oc_ignore ${system.gpufreq_limited_oc_ignore}
-on property:system.gpufreq_state=*
-    write /proc/gpufreq/gpufreq_state ${system.gpufreq_state}
-on property:system.gpu_power_policy=*
-    write /sys/devices/soc/13040000.mali/power_policy ${system.gpu_power_policy}
-on property:system.input_boost_cpu_num=*
-    write /proc/hps/input_boost_cpu_num ${system.input_boost_cpu_num}
-on property:system.rush_boost_enabled=*
-    write /proc/hps/rush_boost_enabled ${system.rush_boost_enabled}
-on property:system.rush_boost_cpu_num=*
-    write /proc/hps/rush_boost_cpu_num ${system.rush_boost_cpu_num}
-on property:system.input_boost_enabled=*
-    write /proc/hps/input_boost_enabled ${system.input_boost_enabled}
-on property:system.kernel_max=*
-    write /sys/devices/system/cpu/kernel_max ${system.kernel_max}
-on property:system.clabcct=*
-    write /proc/driver/thermal/clabcct ${system.clabcct}
-on property:system.clbcct=*
-    write /proc/driver/thermal/clbcct ${system.clbcct}
-on property:system.clabcct_lcmoff=*
-    write /proc/driver/thermal/clabcct_lcmoff ${system.clabcct_lcmoff}
-on property:system.clmutt=*
-    write /proc/driver/thermal/clmutt ${system.clmutt}
-on property:system.clatm_setting=enabled
-    write /proc/driver/thermal/clatm_setting 0 3000 10 15 1 560 0 1000 0
-    write /proc/driver/thermal/clatm_setting 1 2000 15 30 1 460 8000 700 0
-on property:system.clfps_level=*
-    write /proc/driver/thermal/clfps_level ${system.clfps_level}
-on property:system.clatm_gpu_threshold=*
-    write /proc/driver/thermal/clatm_gpu_threshold ${system.clatm_gpu_threshold}
-on property:system.clfps=*
-    write /proc/driver/thermal/clfps ${system.clfps}
-on property:system.clfps_adp=*
-    write /proc/driver/thermal/clfps_adp ${system.clfps_adp}
-on property:system.fps_tm=*
-    write /proc/driver/fps_tm ${system.fps_tm}
-on property:system.thermal_limit=*
-    write /proc/ppm/policy/thermal_limit ${system.thermal_limit}
-on property:system.ksm_run=*
-    write /sys/kernel/mm/ksm/run ${system.ksm_run}
-on property:system.ksm_sleep_millisecs=*
-    write /sys/kernel/mm/ksm/sleep_millisecs ${system.ksm_sleep_millisecs}
-on property:system.ksm_pages_to_scan=*
-    write /sys/kernel/mm/ksm/pages_to_scan ${system.ksm_pages_to_scan}
-
-
 on property:security.perf_harden=0
     write /proc/sys/kernel/perf_event_paranoid 1
 
@@ -851,10 +829,6 @@ service ueventd /sbin/ueventd
     class core
     critical
     seclabel u:r:ueventd:s0
-
-service custom /vendor/custom.sh
-    class main
-    oneshot
 
 service healthd /system/bin/healthd
     class core
@@ -874,3 +848,7 @@ on property:ro.debuggable=1
     # The folder is used to store method traces.
     chmod 0773 /data/misc/trace
     start console
+
+#service flash_recovery /system/bin/install-recovery.sh
+#    class main
+#    oneshot

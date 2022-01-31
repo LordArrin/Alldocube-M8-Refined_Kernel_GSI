@@ -248,6 +248,7 @@ on fs
 #INTERNAL_START
     write /proc/bootprof "INIT:Mount_START"
     mount_all /vendor/etc/fstab.mt6797 ${ro.mtkrc.path}multi_init.rc
+    exec /system/bin/tune2fs -u 10010 -r 4096 /dev/block/platform/bootdevice/by-name/userdata
     write /proc/bootprof "INIT:Mount_END"
 #INTERNAL_END
 
