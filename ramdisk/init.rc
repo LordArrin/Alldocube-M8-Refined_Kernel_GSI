@@ -6,11 +6,9 @@
 
 import /init.environ.rc
 import /init.usb.rc
-import /init.mt6797.rc
 import /vendor/etc/init/hw/init.mt6797.rc
 import /init.usb.configfs.rc
-import /init.zygote64_32.rc
-import /init.cdfinger.rc
+import /init.${ro.zygote}.rc
 
 on early-init
     # Set init and its forked children's oom_adj.
@@ -190,16 +188,6 @@ on init
     write /proc/hps/num_limit_thermal 0
     write /proc/hps/num_limit_ultra_power_saving 0
 
-    # Contains, as a percentage of total available memory that contains free pages and reclaimable pages, 
-    # the number of pages at which a process which is generating disk writes will itself start writing out dirty data.
-
-    write /proc/sys/vm/dirty_ratio 95
-
-    # Contains, as a percentage of total available memory that contains free pages and reclaimable pages, 
-    # the number of pages at which the background kernel flusher threads will start writing out dirty data.
-
-    write /proc/sys/vm/dirty_background ratio 80
-
     # Hints to the kernel how much CPU time it should be allowed to use to handle perf sampling events.
     # If the perf subsystem is informed that its samples are exceeding this limit, it
     # will drop its sampling frequency to attempt to reduce its CPU usage. Disabled.
@@ -221,7 +209,7 @@ on init
     write /proc/hps/rush_boost_enabled 1
     write /proc/hps/rush_boost_cpu_num 8
     write /proc/hps/input_boost_enabled 1
-    write /sys/devices/system/cpu/kernel_max -1
+    write /sys/devices/system/cpu/kernel_max 10
 
     # GPU always on. Test
 
@@ -283,7 +271,7 @@ on init
     chmod 0666 /dev/cpuctl/tasks
     write /dev/cpuctl/cpu.shares 1024
     write /dev/cpuctl/cpu.rt_period_us 1000000
-    write /dev/cpuctl/cpu.rt_runtime_us 800000
+    write /dev/cpuctl/cpu.rt_runtime_us 900000
 
     # sets up initial cpusets for ActivityManager
     mkdir /dev/cpuset
@@ -803,9 +791,9 @@ on property:sys.boot_completed=1
 
 # system server cannot write to /proc/sys files,
 # and chown/chmod does not work for /proc/sys/ entries.
-# So proxy writes through init.
-on property:sys.sysctl.extra_free_kbytes=*
-    write /proc/sys/vm/extra_free_kbytes ${sys.sysctl.extra_free_kbytes}
+# So proxy writes through init. <- Good point. So useful.
+# on property:sys.sysctl.extra_free_kbytes=*
+#    write /proc/sys/vm/extra_free_kbytes ${sys.sysctl.extra_free_kbytes}
 
 # "tcp_default_init_rwnd" Is too long!
 on property:sys.sysctl.tcp_def_init_rwnd=*
@@ -832,17 +820,6 @@ service healthd /system/bin/healthd
 service console /system/bin/sh
     class core
     console
-    disabled
     user shell
     group shell log readproc
     seclabel u:r:shell:s0
-
-on property:ro.debuggable=1
-    # Give writes to anyone for the trace folder on debug builds.
-    # The folder is used to store method traces.
-    chmod 0773 /data/misc/trace
-    start console
-
-#service flash_recovery /system/bin/install-recovery.sh
-#    class main
-#    oneshot
