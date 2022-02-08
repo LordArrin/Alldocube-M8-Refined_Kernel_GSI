@@ -1,1 +1,2 @@
-bootopt=64S3,32N2,64N2 buildvariant=eng
+bootopt=64S3,32N2,64N2 buildvariant=eng androidboot.selinux=permissive androidboot.veritymode=permissive maxcpus=9 androidboot.verifiedbootstate=green
+
