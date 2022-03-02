@@ -3,4 +3,6 @@ Improved kernel for GSI
 
 Version 1.7-stable. Strictly recommended to use with GSI.
 
-Applied some tweaks from Meizu Pro 7 and 7 plus. Work in progress...
+Applied some tweaks from Meizu Pro 7 and 7 plus. 
+
+Device was sold, work was stopped. Goodbye)
